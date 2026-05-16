@@ -35,6 +35,7 @@ const (
 	url_category_desc_attributes_values = "/v1/description-category/attribute/values"
 
 	url_transactions_list = "/v3/finance/transaction/list"
+	url_cash_flow_list    = "/v1/finance/cash-flow-statement/list"
 )
 
 const (
