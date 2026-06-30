@@ -11,7 +11,8 @@ type RequestParams_cash_flow_list struct {
 	Date        RequestItem_cash_flow_list_date `json:"date"`
 	WithDetails bool                            `json:"with_details"`
 	Page        int                             `json:"page"`
-	PageSize    int                             `json:"page_size"`
+	// PageSize<=1000
+	PageSize int `json:"page_size"`
 }
 
 type RequestItem_cash_flow_list_date struct {
@@ -30,6 +31,7 @@ type ResponseResult_cash_flow_list struct {
 	PageCount int                                    `json:"page_count"`
 }
 
+// не учитывает тут эквайринг
 type ResponseItem_cash_flow_list_cashflow struct {
 	Period                      ResponseItem_cash_flow_list_period `json:"period"`
 	OrdersAmount                float64                            `json:"orders_amount"`

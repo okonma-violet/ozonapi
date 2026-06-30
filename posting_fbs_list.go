@@ -5,9 +5,11 @@ import (
 	"time"
 )
 
+// https://api-seller.ozon.ru/v4/posting/fbs/list
+
 type RequestParams_posting_fbs_list struct {
 	// Sorting direction
-	Direction SortingDirection `json:"dir"`
+	Direction SortingDirection `json:"sort_dir"`
 
 	//Filter
 	Filter RequestItem_posting_fbs_list_filter `json:"filter"`
@@ -17,8 +19,8 @@ type RequestParams_posting_fbs_list struct {
 	//   - minimum is 1.
 	Limit int64 `json:"limit"`
 
-	// Number of elements that will be skipped in the response. For example, if offset=10, the response will start with the 11th element found
-	Offset int64 `json:"offset"`
+	// Указатель для выборки следующих данных
+	Cursor string `json:"cursor"`
 
 	// Additional fields that should be added to the response
 	With RequestItem_posting_fbs_list_with `json:"with"`
@@ -26,7 +28,7 @@ type RequestParams_posting_fbs_list struct {
 
 type RequestItem_posting_fbs_list_filter struct {
 	// Delivery method identifier
-	DeliveryMethodId []int64 `json:"delivery_method_id,omitempty"`
+	DeliveryMethodId []int64 `json:"delivery_method_ids,omitempty"`
 
 	// Optional, but "Since" and "To" are still needed
 	LastChangedStatusDate RequestItem_posting_fbs_list_filter_changed_status
@@ -42,7 +44,7 @@ type RequestItem_posting_fbs_list_filter struct {
 	OrderId int64 `json:"order_id,omitempty"`
 
 	// Delivery service identifier
-	ProviderId []int64 `json:"provider_id,omitempty"`
+	ProviderIds []int64 `json:"provider_ids,omitempty"`
 
 	// Start date of the period for which a list of shipments should be generated.
 	//
@@ -59,10 +61,10 @@ type RequestItem_posting_fbs_list_filter struct {
 	To string `json:"to"`
 
 	// Shipment status
-	Status string `json:"status,omitempty"`
+	Statuses []string `json:"statuses,omitempty"`
 
 	// Warehouse identifier
-	WarehouseId []int64 `json:"warehouse_id,omitempty"`
+	WarehouseIds []int64 `json:"warehouse_ids,omitempty"`
 }
 
 type RequestItem_posting_fbs_list_filter_changed_status struct {
@@ -80,15 +82,17 @@ type RequestItem_posting_fbs_list_with struct {
 	// Add financial data to the response
 	FinancialData bool `json:"financial_data"`
 
+	// Юр
+	LegalInfo bool `json:"legal_info"`
+
 	// Transliterate the return values
 	Translit bool `json:"translit"`
 }
 
 type Response_posting_fbs_list struct {
 	baseResponse
-	Result ResponseResult_posting_fbs_list `json:"result"`
-}
-type ResponseResult_posting_fbs_list struct {
+
+	Cursor string `json:"cursor"`
 	// Indicates that the response returned not the entire array of shipments:
 	//   - true — it is necessary to make a new request with a different offset value to get information on the remaining shipments;
 	//   - false — the entire array of shipments for the filter specified in the request was returned in the response
@@ -104,6 +108,8 @@ type ResponseItem_posting_fbs_list struct {
 	// Analytics data
 	AnalyticsData ResponseItem_posting_fbs_list_analyticsdata `json:"analytics_data"`
 
+	AvailableActions []string `json:"available_actions"`
+
 	// Shipment barcodes
 	Barcodes ResponseItem_posting_fbs_list_barcode `json:"barcodes"`
 
@@ -113,17 +119,44 @@ type ResponseItem_posting_fbs_list struct {
 	// Customer details
 	Customer ResponseItem_posting_fbs_list_customer `json:"customer"`
 
-	// Date when the shipment was transferred for delivery
+	// Информация о грузоместе
+	Container any `json:"container"`
+
+	// Тип сортировки грузоместа:
+	// SORT — сортируемый;
+	// NON-SORT — несортируемый.
+	ContainerSortType any `json:"container_sort_type"`
+
+	// Дата передачи отправления в доставку
 	DeliveringDate time.Time `json:"delivering_date"`
 
 	// Delivery method
 	DeliveryMethod ResponseItem_posting_fbs_list_deliverymethod `json:"delivery_method"`
+
+	// Схема доставки:
+	// SDS — идентификатор единого SKU;
+	// FBO — идентификатор товара, который продаётся со склада Ozon;
+	// FBS — идентификатор товара, который продаётся со склада FBS;
+	// Crossborder — идентификатор товара, который продаётся из-за границы.
+	DeliveringScheme string `json:"delivery_schema"`
+
+	// Идентификатор места назначения
+	DestPlaceId int64 `json:"destination_place_id"`
+
+	// Название места назначения
+	DestPlaceName string `json:"destination_place_name"`
+
+	// Информация о заказе с внешней платформы
+	ExternalOrder any `json:"external_order"`
 
 	// Data on the product cost, discount amount, payout and commission
 	FinancialData ResponseItem_posting_fbs_list_financialdata `json:"financial_data"`
 
 	// Start date and time of shipment processing
 	InProccessAt time.Time `json:"in_process_at"`
+
+	// если отправление доставляется методом «Самовывоз из магазина»
+	IsClickCollect bool `json:"is_click_and_collect"`
 
 	// If Ozon Express fast delivery was used — `true`
 	IsExpress bool `json:"is_express"`
@@ -134,6 +167,15 @@ type ResponseItem_posting_fbs_list struct {
 
 	// Number of boxes in which the product is packed
 	MultiBoxQuantity int32 `json:"multi_box_qty"`
+
+	// если товар — пересорт
+	IsPeresortable bool `json:"is_presortable"`
+
+	// Юридическая информация о покупателе
+	LegalInfo any `json:"legal_info"`
+
+	// Список товаров с дополнительными характеристиками
+	Optional any `json:"optional"`
 
 	// Identifier of the order to which the shipment belongs
 	OrderId int64 `json:"order_id"`
@@ -147,12 +189,21 @@ type ResponseItem_posting_fbs_list struct {
 	// Shipment number
 	PostingNumber string `json:"posting_number"`
 
+	// Дата и время успешной валидации кода курьера. Проверьте код курьера методом /v1/posting/fbs/pick-up-code/verify
+	PickupCodeVerifiedAt time.Time `json:"pickup_code_verified_at"`
+
 	// List of products in the shipment
 	Products []ResponseItem_posting_fbs_list_postingproduct `json:"products"`
 
 	// The parameter is only relevant for bulky products
 	// with a delivery by a third-party or integrated service
 	PRROption PRROptionStatus `json:"prr_option"`
+
+	// Идентификатор эконом-товара???
+	QuantunId int64 `json:"quantum_id"`
+
+	// если нужно заполнить атрибуты отслеживаемости
+	RequireBLRTraceableAttrs bool `json:"require_blr_traceable_attrs"`
 
 	// Array of Ozon Product IDs (SKU) for which you need to pass the
 	// customs cargo declaration (CCD) number, the manufacturing country,
@@ -167,26 +218,70 @@ type ResponseItem_posting_fbs_list struct {
 	// Дата и время отгрузки без просрочки.
 	ShipmentDateWithoutDelay time.Time `json:"shipment_date_without_delay"`
 
-	// Shipment status
+	// Статус отправления:
+	// acceptance_in_progress — идёт приёмка;
+	// arbitration — арбитраж;
+	// awaiting_approve — ожидает подтверждения;
+	// awaiting_deliver — ожидает отгрузки;
+	// awaiting_packaging — ожидает упаковки;
+	// awaiting_registration — ожидает регистрации;
+	// awaiting_verification — создано;
+	// cancelled — отменено;
+	// cancelled_from_split_pending — отменено из-за разделения отправления;
+	// client_arbitration — клиентский арбитраж доставки;
+	// delivering — доставляется;
+	// driver_pickup — у водителя;
+	// not_accepted — не принято на сортировочном центре
 	Status string `json:"status"`
 
-	// Shipment substatus
+	// Подстатус отправления:
+	// posting_acceptance_in_progress— идёт приёмка;
+	// posting_in_arbitration — арбитраж;
+	// posting_created — создано;
+	// posting_in_carriage — в перевозке;
+	// posting_not_in_carriage — не добавлено в перевозку;
+	// posting_registered — зарегистрировано;
+	// posting_transferring_to_delivery, если status=awaiting_deliver — передаётся в доставку;
+	// posting_awaiting_passport_data — ожидает паспортных данных;
+	// posting_created — создано;
+	// posting_awaiting_registration — ожидает регистрации;
+	// posting_registration_error — ошибка регистрации;
+	// posting_transferring_to_delivery, если status=awaiting_registration — передаётся курьеру;
+	// posting_split_pending — создано;
+	// posting_canceled — отменено;
+	// posting_in_client_arbitration — клиентский арбитраж доставки;
+	// posting_delivered — доставлено;
+	// posting_received — получено;
+	// posting_conditionally_delivered — условно доставлено;
+	// posting_in_courier_service — курьер в пути;
+	// posting_in_pickup_point — в пункте выдачи;
+	// posting_on_way_to_city — в пути в ваш город;
+	// posting_on_way_to_pickup_point — в пути в пункт выдачи;
+	// posting_returned_to_warehouse — возвращено на склад;
+	// posting_transferred_to_courier_service — передаётся в службу доставки;
+	// posting_driver_pick_up — у водителя;
+	// posting_not_in_sort_center — не принято на сортировочном центре;
+	// ship_failed — сборка не удалась
 	Substatus string `json:"substatus"`
+
+	// Информация по тарификации отгрузки
+	Tariffication any `json:"tariffication"`
+
+	// Информация по тарификации отгрузки
+	TarifficationSteps []any `json:"tariffication_steps"`
 
 	// Type of integration with the delivery service
 	TPLIntegrationType string `json:"tpl_integration_type"`
 
 	// Shipment tracking number
 	TrackingNumber string `json:"tracking_number"`
+
+	// Объёмный вес товара
+	VolWeight string `json:"volume_weight"`
 }
 type ResponseItem_posting_fbs_list_addressee struct {
 	// Recipient name
 	Name string `json:"name"`
-
-	// Recipient phone number.
-	//
-	// Returns an empty string
-	Phone string `json:"phone"`
 }
 type ResponseItem_posting_fbs_list_analyticsdata struct {
 	// Delivery city
@@ -210,7 +305,16 @@ type ResponseItem_posting_fbs_list_analyticsdata struct {
 	// Premium subscription availability
 	IsPremium bool `json:"is_premium"`
 
-	// Payment method
+	// Способ оплаты:
+	// картой онлайн;
+	// карта Ozon Банка;
+	// автосписание с карты Ozon Банка при выдаче;
+	// сохранённой картой при получении;
+	// Система Быстрых Платежей;
+	// Ozon Рассрочка;
+	// оплата на расчётный счёт;
+	// SberPay;
+	// предоплата на стороне внешнего продавца.
 	PaymentTypeGroupName string `json:"payment_type_group_name"`
 
 	// Delivery region
@@ -346,47 +450,47 @@ type ResponseItem_posting_fbs_list_financialdata struct {
 	// Identifier of the cluster, where the shipment is delivered
 	ClusterTo string `json:"cluster_to"`
 
-	// Services
-	PostingServices ResponseItem_posting_fbs_list_marketplaceservices `json:"posting_services"`
+	// // Services
+	// PostingServices ResponseItem_posting_fbs_list_marketplaceservices `json:"posting_services"`
 
 	// List of products in the shipment
 	Products []ResponseItem_posting_fbs_list_financialdataproduct `json:"products"`
 }
 
-type ResponseItem_posting_fbs_list_marketplaceservices struct {
-	// Last mile
-	DeliveryToCustomer float64 `json:"marketplace_service_item_deliv_to_customer"`
+// type ResponseItem_posting_fbs_list_marketplaceservices struct {
+// 	// Last mile
+// 	DeliveryToCustomer float64 `json:"marketplace_service_item_deliv_to_customer"`
 
-	// Pipeline
-	DirectFlowTrans float64 `json:"marketplace_service_item_direct_flow_trans"`
+// 	// Pipeline
+// 	DirectFlowTrans float64 `json:"marketplace_service_item_direct_flow_trans"`
 
-	// Shipment processing in the fulfilment warehouse (FF)
-	DropoffFF float64 `json:"marketplace_service_item_item_dropoff_ff"`
+// 	// Shipment processing in the fulfilment warehouse (FF)
+// 	DropoffFF float64 `json:"marketplace_service_item_item_dropoff_ff"`
 
-	// Shipment processing at the pick up point
-	DropoffPVZ float64 `json:"marketplace_service_item_dropoff_pvz"`
+// 	// Shipment processing at the pick up point
+// 	DropoffPVZ float64 `json:"marketplace_service_item_dropoff_pvz"`
 
-	// Shipment processing at the sorting center
-	DropoffSC float64 `json:"marketplace_service_item_dropoff_sc"`
+// 	// Shipment processing at the sorting center
+// 	DropoffSC float64 `json:"marketplace_service_item_dropoff_sc"`
 
-	// Order packaging
-	Fulfillment float64 `json:"marketplace_service_item_fulfillment"`
+// 	// Order packaging
+// 	Fulfillment float64 `json:"marketplace_service_item_fulfillment"`
 
-	// Transport arrival to the seller's address for shipments pick-up (Pick-up)
-	Pickup float64 `json:"marketplace_service_item_pickup"`
+// 	// Transport arrival to the seller's address for shipments pick-up (Pick-up)
+// 	Pickup float64 `json:"marketplace_service_item_pickup"`
 
-	// Return processing
-	ReturnAfterDeliveryToCustomer float64 `json:"marketplace_service_item_return_after_deliv_to_customer"`
+// 	// Return processing
+// 	ReturnAfterDeliveryToCustomer float64 `json:"marketplace_service_item_return_after_deliv_to_customer"`
 
-	// Reverse pipeline
-	ReturnFlowTrans float64 `json:"marketplace_service_item_return_flow_trans"`
+// 	// Reverse pipeline
+// 	ReturnFlowTrans float64 `json:"marketplace_service_item_return_flow_trans"`
 
-	// Cancellations processing
-	ReturnNotDeliveryToCustomer float64 `json:"marketplace_service_item_return_not_deliv_to_customer"`
+// 	// Cancellations processing
+// 	ReturnNotDeliveryToCustomer float64 `json:"marketplace_service_item_return_not_deliv_to_customer"`
 
-	// Non-purchase processing
-	ReturnPartGoodsCustomer float64 `json:"marketplace_service_item_return_part_goods_customer"`
-}
+// 	// Non-purchase processing
+// 	ReturnPartGoodsCustomer float64 `json:"marketplace_service_item_return_part_goods_customer"`
+// }
 
 type ResponseItem_posting_fbs_list_requirements struct {
 	// Array of Ozon Product IDs (SKU) for which you need to pass the customs cargo declaration (CCD) numbers.
@@ -408,11 +512,19 @@ type ResponseItem_posting_fbs_list_requirements struct {
 
 	// Array of Ozon Product IDs (SKU) for which you need to pass a product batch registration number
 	ProductsRequiringRNPT []int64 `json:"products_requiring_rnpt"`
+
+	// ЕСТЬ ЕЩЕ НО ПОХУЙ
 }
 
 type ResponseItem_posting_fbs_list_postingproduct struct {
-	// Mandatory product labeling
-	MandatoryMark []string `json:"mandatory_mark"`
+	// Список IMEI мобильных устройств
+	Imeis []string `json:"imei"`
+
+	// если товар отслеживаемый
+	IsBLRTraceable bool `json:"is_blr_traceable"`
+
+	// если Ozon выкупил товар для доставки в ЕАЭС и другие страны
+	IsMarketplaceBuyout bool `json:"is_marketplace_buyout"`
 
 	// Product name
 	Name string `json:"name"`
@@ -420,17 +532,37 @@ type ResponseItem_posting_fbs_list_postingproduct struct {
 	// Product identifier in the seller's system
 	OfferId string `json:"offer_id"`
 
-	// Currency of your prices. It matches the one set in the personal account settings
-	CurrencyCode string `json:"currency_code"`
-
 	// Product price
-	Price string `json:"price"`
+	Price ResponseItem_posting_fbs_list_financialdataproductcustomerprice `json:"price"`
 
 	// Product quantity in the shipment
 	Quantity int32 `json:"quantity"`
 
 	// Product identifier in the Ozon system, SKU
 	SKU int64 `json:"sku"`
+
+	ProductColor int64 `json:"product_color"`
+
+	Weight int64 `json:"weight"`
+}
+
+type ResponseItem_posting_fbs_list_financialdataproductcommission struct {
+	// Commission amount for the product
+	CommissionAmount float64 `json:"amount"`
+
+	// Commission percentage
+	CommissionPercent int64 `json:"percent"`
+
+	// Code of the currency used to calculate the commissions
+	CommissionsCurrencyCode string `json:"currency"`
+}
+
+type ResponseItem_posting_fbs_list_financialdataproductcustomerprice struct {
+	// Customer price
+	ClientPrice string `json:"amount"`
+
+	// Currency of your prices. It matches the currency set in the personal account settings
+	CurrencyCode string `json:"currency"`
 }
 
 type ResponseItem_posting_fbs_list_financialdataproduct struct {
@@ -438,22 +570,13 @@ type ResponseItem_posting_fbs_list_financialdataproduct struct {
 	Actions []string `json:"actions"`
 
 	// Customer price
-	ClientPrice string `json:"client_price"`
+	CustomerPrice ResponseItem_posting_fbs_list_financialdataproductcustomerprice `json:"customer_price"`
 
 	// Commission amount for the product
-	CommissionAmount float64 `json:"commission_amount"`
+	Commission ResponseItem_posting_fbs_list_financialdataproductcommission `json:"commission"`
 
-	// Commission percentage
-	CommissionPercent int64 `json:"commission_percent"`
-
-	// Code of the currency used to calculate the commissions
-	CommissionsCurrencyCode string `json:"commissions_currency_code"`
-
-	// Services
-	ItemServices ResponseItem_posting_fbs_list_marketplaceservices `json:"item_services"`
-
-	// Currency of your prices. It matches the currency set in the personal account settings
-	CurrencyCode string `json:"currency_code"`
+	// // Services
+	// ItemServices ResponseItem_posting_fbs_list_marketplaceservices `json:"item_services"`
 
 	// Price before discounts. Displayed strikethrough on the product description page
 	OldPrice float64 `json:"old_price"`
@@ -461,15 +584,10 @@ type ResponseItem_posting_fbs_list_financialdataproduct struct {
 	// Payment to the seller
 	Payout float64 `json:"payout"`
 
-	// Delivery details.
-	//
-	// Returns `null`
-	Picking ResponseItem_posting_fbs_list_financialdataproductpicking `json:"picking"`
-
 	// Product price including discounts. This value is shown on the product description page
 	Price float64 `json:"price"`
 
-	// Product identifier
+	// SKU
 	ProductId int64 `json:"product_id"`
 
 	// Product quantity in the shipment
@@ -482,22 +600,11 @@ type ResponseItem_posting_fbs_list_financialdataproduct struct {
 	TotalDiscountValue float64 `json:"total_discount_value"`
 }
 
-type ResponseItem_posting_fbs_list_financialdataproductpicking struct {
-	// Delivery cost
-	Amount float64 `json:"amount"`
-
-	// Delivery date and time
-	Moment time.Time `json:"moment"`
-
-	// Bulky products or not
-	Tag string `json:"tag"`
-}
-
-func NewRequestParams_posting_fbs_list(since, to, sincestat, tostat time.Time, offset, limit int64, sortingdir SortingDirection) *RequestParams_posting_fbs_list {
+func NewRequestParams_posting_fbs_list(since, to, sincestat, tostat time.Time, cursor string, limit int64, sortingdir SortingDirection) *RequestParams_posting_fbs_list {
 	req := &RequestParams_posting_fbs_list{
 		Direction: sortingdir,
 		Limit:     limit,
-		Offset:    offset,
+		Cursor:    cursor,
 		With: RequestItem_posting_fbs_list_with{
 			AnalyticsData: true,
 			Barcodes:      true,

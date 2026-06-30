@@ -25,7 +25,7 @@ const (
 
 	url_posting_fbo_list = "/v2/posting/fbo/list"
 
-	url_posting_fbs_list             = "/v3/posting/fbs/list"
+	url_posting_fbs_list             = "/v4/posting/fbs/list"
 	url_posting_fbs_pass_to_shipping = "/v2/posting/fbs/awaiting-delivery"
 
 	url_shipment_act_fbs_create = "/v2/posting/fbs/act/create" //????
