@@ -53,6 +53,7 @@ const (
 	RequestItems_cap_products_list_attributes = 1000
 	RequestItems_cap_products_upsert          = 100
 	RequestItems_cap_transactions_list        = 1000
+	RequestItems_cap_returns_list             = 500
 )
 
 //const cap_refresh_time = time.Minute

@@ -234,7 +234,7 @@ const (
 )
 
 func NewRequestParams_returns_list(from, to time.Time, postingnums []string, limit int, lastid int64) *RequestParams_returns_list {
-	if limit <= 0 || limit > 500 {
+	if limit <= 0 || limit > RequestItems_cap_returns_list {
 		panic("improper limit")
 	}
 	if lastid < 1 {
@@ -258,7 +258,7 @@ func NewRequestParams_returns_list(from, to time.Time, postingnums []string, lim
 	return rp
 }
 
-func (cl *OzonClient) GetTransactionsList(params *RequestParams_returns_list) (*Response_returns_list, error) {
+func (cl *OzonClient) GetReturnsList(params *RequestParams_returns_list) (*Response_returns_list, error) {
 	req, err := cl.newRequest(http.MethodPost, url_returns_list, params)
 	if err != nil {
 		return nil, err
