@@ -237,7 +237,7 @@ func NewRequestParams_returns_list(from, to time.Time, postingnums []string, lim
 	if limit <= 0 || limit > RequestItems_cap_returns_list {
 		panic("improper limit")
 	}
-	if lastid < 1 {
+	if lastid < 0 {
 		panic("improper lastid")
 	}
 
