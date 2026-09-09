@@ -94,9 +94,6 @@ const (
 
 type Response_returns_list struct {
 	baseResponse
-	Result ResponseResult_returns_list `json:"result"`
-}
-type ResponseResult_returns_list struct {
 	Items   []ResponseItem_return `json:"returns"`
 	HasNext bool                  `json:"has_next"`
 }
