@@ -36,6 +36,8 @@ const (
 
 	url_transactions_list = "/v3/finance/transaction/list"
 	url_cash_flow_list    = "/v1/finance/cash-flow-statement/list"
+
+	url_returns_list = "/v1/returns/list"
 )
 
 const (
