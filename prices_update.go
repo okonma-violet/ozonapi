@@ -10,21 +10,17 @@ type RequestParams_prices_update struct {
 }
 
 type RequestItem_prices_update struct {
-	// Attribute for enabling and disabling promos auto-application
-	AutoActionEnabled SwitchingAttribute `json:"auto_action_enabled"`
-
 	AutoAddToOzonActionsListEnabled SwitchingAttribute `json:"auto_add_to_ozon_actions_list_enabled"`
-
 	// Currency of your prices. The passed value must be the same as the one set in the personal account settings.
 	// By default, the passed value is RUB, Russian ruble
 	CurrencyCode CurrencyCode `json:"currency_code"`
-
 	// Minimum product price with all promotions applied
 	MinPrice string `json:"min_price"`
-
+	// true, чтобы Ozon учитывал ограничения для акций и стратегий при автодобавлении товара в акции.
+	// Если ничего не передать, изменений в статусе учёта цены не будет.
+	MinPriceForAutoActionsEnabled bool `json:"min_price_for_auto_actions_enabled"`
 	// Product identifier in the seller's system
 	OfferId string `json:"offer_id"`
-
 	// Price before discounts. Displayed strikethrough on the product description page.
 	// Specified in rubles.
 	// The fractional part is separated by decimal point,
@@ -32,7 +28,6 @@ type RequestItem_prices_update struct {
 	//
 	// If there are no discounts on the product, pass 0 to this field and specify the correct price in the price field
 	OldPrice string `json:"old_price"`
-
 	// Product price including discounts. This value is displayed on the product description page.
 	//
 	// If the old_price parameter value is greater than 0,
@@ -45,7 +40,6 @@ type RequestItem_prices_update struct {
 	//
 	// > 10,000 - min diff. 500 rubles
 	Price string `json:"price"`
-
 	// Attribute for enabling and disabling pricing strategies auto-application
 	//
 	// If you've previously enabled automatic application of pricing strategies and don't want to disable it, pass UNKNOWN in the next requests.
@@ -88,7 +82,7 @@ func (rp *RequestParams_prices_update) CapReached() bool {
 }
 
 // return false if request items cap reached (and shit did not add)
-func (rp *RequestParams_prices_update) Add(offerid string, productid int64, nosaleprice, price string, disableactions bool) bool {
+func (rp *RequestParams_prices_update) Add(offerid string, productid int64, nosaleprice, price string, disableactions, minPriceForAutoActionsEnabled bool) bool {
 	var actswitch SwitchingAttribute
 	if disableactions {
 		actswitch = SwitchingAttributeDisabled
@@ -96,7 +90,7 @@ func (rp *RequestParams_prices_update) Add(offerid string, productid int64, nosa
 		actswitch = SwitchingAttributeUnknown
 	}
 	if len(rp.Prices) < RequestItems_cap_prices_update {
-		rp.Prices = append(rp.Prices, RequestItem_prices_update{OfferId: offerid, ProductId: productid, OldPrice: nosaleprice, Price: price, AutoActionEnabled: actswitch, AutoAddToOzonActionsListEnabled: actswitch, CurrencyCode: CurrencyCode_RUB, PriceStrategyEnabled: SwitchingAttributeUnknown})
+		rp.Prices = append(rp.Prices, RequestItem_prices_update{OfferId: offerid, ProductId: productid, OldPrice: nosaleprice, Price: price, MinPriceForAutoActionsEnabled: minPriceForAutoActionsEnabled, AutoAddToOzonActionsListEnabled: actswitch, CurrencyCode: CurrencyCode_RUB, PriceStrategyEnabled: SwitchingAttributeUnknown})
 		return true
 	}
 	return false
