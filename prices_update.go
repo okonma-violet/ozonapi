@@ -51,6 +51,15 @@ type RequestItem_prices_update struct {
 
 	// Product identifier
 	ProductId int64 `json:"product_id"`
+	// Ставка НДС для товара:
+	// 0 — не облагается НДС,
+	// 0.05 — 5%,
+	// 0.07 — 7%,
+	// 0.1 — 10%,
+	// 0.2 — 20%,
+	// 0.22 — 22%.
+	// Передавайте значение ставки, актуальное на данный момент.
+	Vat string `json:"vat"`
 }
 
 type Response_prices_update struct {
@@ -82,7 +91,7 @@ func (rp *RequestParams_prices_update) CapReached() bool {
 }
 
 // return false if request items cap reached (and shit did not add)
-func (rp *RequestParams_prices_update) Add(offerid string, productid int64, nosaleprice, price string, disableactions, minPriceForAutoActionsEnabled bool) bool {
+func (rp *RequestParams_prices_update) Add(offerid string, productid int64, nosaleprice, price string, disableactions, minPriceForAutoActionsEnabled bool, vat string) bool {
 	var actswitch SwitchingAttribute
 	if disableactions {
 		actswitch = SwitchingAttributeDisabled
@@ -90,7 +99,7 @@ func (rp *RequestParams_prices_update) Add(offerid string, productid int64, nosa
 		actswitch = SwitchingAttributeUnknown
 	}
 	if len(rp.Prices) < RequestItems_cap_prices_update {
-		rp.Prices = append(rp.Prices, RequestItem_prices_update{OfferId: offerid, ProductId: productid, OldPrice: nosaleprice, Price: price, MinPriceForAutoActionsEnabled: minPriceForAutoActionsEnabled, AutoAddToOzonActionsListEnabled: actswitch, CurrencyCode: CurrencyCode_RUB, PriceStrategyEnabled: SwitchingAttributeUnknown})
+		rp.Prices = append(rp.Prices, RequestItem_prices_update{OfferId: offerid, ProductId: productid, OldPrice: nosaleprice, Price: price, MinPriceForAutoActionsEnabled: minPriceForAutoActionsEnabled, AutoAddToOzonActionsListEnabled: actswitch, CurrencyCode: CurrencyCode_RUB, PriceStrategyEnabled: SwitchingAttributeUnknown, Vat: vat})
 		return true
 	}
 	return false
