@@ -99,7 +99,16 @@ func (rp *RequestParams_prices_update) Add(offerid string, productid int64, nosa
 		actswitch = SwitchingAttributeUnknown
 	}
 	if len(rp.Prices) < RequestItems_cap_prices_update {
-		rp.Prices = append(rp.Prices, RequestItem_prices_update{OfferId: offerid, ProductId: productid, OldPrice: nosaleprice, Price: price, MinPriceForAutoActionsEnabled: minPriceForAutoActionsEnabled, AutoAddToOzonActionsListEnabled: actswitch, CurrencyCode: CurrencyCode_RUB, PriceStrategyEnabled: SwitchingAttributeUnknown, Vat: vat})
+		rp.Prices = append(rp.Prices, RequestItem_prices_update{OfferId: offerid,
+			ProductId:                       productid,
+			OldPrice:                        nosaleprice,
+			Price:                           price,
+			MinPrice:                        price,
+			MinPriceForAutoActionsEnabled:   minPriceForAutoActionsEnabled,
+			AutoAddToOzonActionsListEnabled: actswitch,
+			CurrencyCode:                    CurrencyCode_RUB,
+			PriceStrategyEnabled:            SwitchingAttributeUnknown,
+			Vat:                             vat})
 		return true
 	}
 	return false
