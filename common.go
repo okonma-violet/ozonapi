@@ -13,6 +13,12 @@ const url_base = "https://api-seller.ozon.ru"
 const time_format = "2006-01-02T15:04:05Z"
 
 const (
+	header_ratelimiter_remaining  = "ratelimit-remaining"
+	header_ratelimiter_retryafter = "retry-after"
+	ratelimit_err_respcode        = 429
+)
+
+const (
 	url_prices_list   = "/v5/product/info/prices" // done
 	url_prices_update = "/v1/product/import/prices"
 	url_stocks_update = "/v2/products/stocks"

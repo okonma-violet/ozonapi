@@ -632,7 +632,7 @@ func (cl *OzonClient) GetPostingFbsList(params *RequestParams_posting_fbs_list) 
 	}
 	resp := &Response_posting_fbs_list{}
 
-	response, err := cl.doRequest(req, resp)
+	response, err := cl.doRequestRL(2, 0, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -651,7 +651,7 @@ func (cl *OzonClient) GetPostingFbsListDebug(params *RequestParams_posting_fbs_l
 
 	resp := &Response_posting_fbs_list{}
 
-	response, respp, resppbody, err := cl.doRequestDebug(req, resp)
+	response, respp, resppbody, err := cl.doRequestDebugRL(2, 0, req, resp)
 	if err != nil {
 		return nil, reqq, nil, nil, err
 	}
