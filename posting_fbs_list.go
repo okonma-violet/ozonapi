@@ -543,7 +543,7 @@ type ResponseItem_posting_fbs_list_postingproduct struct {
 
 	ProductColor int64 `json:"product_color"`
 
-	Weight int64 `json:"weight"`
+	Weight float64 `json:"weight"`
 }
 
 type ResponseItem_posting_fbs_list_financialdataproductcommission struct {
