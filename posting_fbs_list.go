@@ -541,7 +541,7 @@ type ResponseItem_posting_fbs_list_postingproduct struct {
 	// Product identifier in the Ozon system, SKU
 	SKU int64 `json:"sku"`
 
-	ProductColor int64 `json:"product_color"`
+	ProductColor string `json:"product_color"`
 
 	Weight float64 `json:"weight"`
 }
