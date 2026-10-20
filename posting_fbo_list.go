@@ -9,15 +9,15 @@ import (
 
 type RequestParams_posting_fbo_list struct {
 	// Sorting direction
-	Direction SortingDirection `json:"dir"`
+	SortDir SortingDirection `json:"sort_dir"`
 	//Filter
 	Filter RequestItem_posting_fbo_list_filter `json:"filter"`
 	// Number of shipments in the response:
 	//   - maximum is 1000,
 	//   - minimum is 1.
 	Limit int64 `json:"limit"`
-	// Number of elements that will be skipped in the response. For example, if offset=10, the response will start with the 11th element found
-	Offset int64 `json:"offset"`
+
+	Cursor string `json:"cursor"`
 	// Transliterate the return values
 	Translit bool `json:"translit"`
 	// Additional fields that should be added to the response
@@ -25,16 +25,13 @@ type RequestParams_posting_fbo_list struct {
 }
 
 type RequestItem_posting_fbo_list_filter struct {
+	PostingNumbers []string `json:"posting_numbers"`
 	// Start date of the period for which a list of shipments should be generated.
-	//
 	// Format: YYYYY-MM-DDTHH:MM:SSZ.
-	//
 	// Example: 2019-08-24T14:15:22Z
 	Since string `json:"since"`
 	// End date of the period for which a list of shipments should be generated.
-	//
 	// Format: YYYYY-MM-DDTHH:MM:SSZ.
-	//
 	// Example: 2019-08-24T14:15:22Z.
 	To string `json:"to"`
 	// awaiting_packaging — ожидает упаковки,
@@ -42,7 +39,7 @@ type RequestItem_posting_fbo_list_filter struct {
 	// delivering — доставляется,
 	// delivered — доставлено,
 	// cancelled — отменено.
-	Status string `json:"status,omitempty"`
+	Statuses []string `json:"statuses,omitempty"`
 }
 
 type RequestItem_posting_fbo_list_with struct {
@@ -56,7 +53,9 @@ type RequestItem_posting_fbo_list_with struct {
 
 type Response_posting_fbo_list struct {
 	baseResponse
-	Result []ResponseItem_posting_fbo_list `json:"result"`
+	Postings []ResponseItem_posting_fbo_list `json:"postings"`
+	HasNext  bool                            `json:"has_next"`
+	Cursor   string                          `json:"cursor"`
 }
 
 type ResponseItem_posting_fbo_list struct {
@@ -68,6 +67,8 @@ type ResponseItem_posting_fbo_list struct {
 
 	// Cancellation reason identifier
 	CancelReasonId int64 `json:"cancel_reason_id"`
+
+	Cancellation ResponseItem_posting_fbo_list_cancellation `json:"cancellation"`
 
 	// Дата и время создания отправления
 	CreatedAt time.Time `json:"created_at"`
@@ -98,6 +99,25 @@ type ResponseItem_posting_fbo_list struct {
 
 	// Shipment substatus
 	Substatus string `json:"substatus"`
+}
+
+type ResponseItem_posting_fbo_list_cancellation struct {
+	// Cancellation reason
+	CancelReason string `json:"cancel_reason"`
+
+	// Shipment cancellation initiator:
+	//
+	// Клиент—client,
+	// Ozon,
+	// Продавец—seller
+	CancellationInitiator string `json:"cancellation_initiator"`
+
+	// Cancellation type:
+	//
+	// client—canceled by client.
+	// ozon—canceled by Ozon.
+	// seller—canceled by seller
+	CancellationType string `json:"cancellation_type"`
 }
 
 type ResponseItem_posting_fbo_list_analyticsdata struct {
@@ -151,7 +171,7 @@ type ResponseItem_posting_fbo_list_postingproduct struct {
 	// Currency of your prices. It matches the one set in the personal account settings
 	CurrencyCode string `json:"currency_code"`
 	// Product price
-	Price string `json:"price"`
+	Price ResponseItem_posting_fbo_list_financialdataproductcustomerprice `json:"price"`
 	// Признак выкупа товара в ЕАЭС и другие страны
 	IsMarketplaceBuyout bool `json:"is_marketplace_buyout"`
 	// Product quantity in the shipment
@@ -159,6 +179,15 @@ type ResponseItem_posting_fbo_list_postingproduct struct {
 	// Product identifier in the Ozon system, SKU
 	SKU int64 `json:"sku"`
 }
+
+type ResponseItem_posting_fbo_list_financialdataproductcustomerprice struct {
+	// Customer price
+	ClientPrice string `json:"amount"`
+
+	// Currency of your prices. It matches the currency set in the personal account settings
+	CurrencyCode string `json:"currency"`
+}
+
 type ResponseItem_posting_fbo_list_financialdata struct {
 	// Identifier of the cluster, where the shipment is sent from
 	ClusterFrom string `json:"cluster_from"`
@@ -171,16 +200,8 @@ type ResponseItem_posting_fbo_list_financialdata struct {
 type ResponseItem_posting_fbo_list_financialdataproduct struct {
 	// Actions
 	Actions []string `json:"actions"`
-	// Customer price
-	ClientPrice string `json:"client_price"`
 	// Commission amount for the product
-	CommissionAmount float64 `json:"commission_amount"`
-	// Commission percentage
-	CommissionPercent int64 `json:"commission_percent"`
-	// Code of the currency used to calculate the commissions
-	CommissionsCurrencyCode string `json:"commissions_currency_code"`
-	// Currency of your prices. It matches the currency set in the personal account settings
-	CurrencyCode string `json:"currency_code"`
+	Commission ResponseItem_posting_fbo_list_financialdataproductcommission `json:"commission"`
 	// Price before discounts. Displayed strikethrough on the product description page
 	OldPrice float64 `json:"old_price"`
 	// Payment to the seller
@@ -189,19 +210,28 @@ type ResponseItem_posting_fbo_list_financialdataproduct struct {
 	Price float64 `json:"price"`
 	// SKU
 	ProductId int64 `json:"product_id"`
-	// Product quantity in the shipment
-	Quantity int64 `json:"quantity"`
 	// Discount percentage
 	TotalDiscountPercent float64 `json:"total_discount_percent"`
 	// Discount amount
 	TotalDiscountValue float64 `json:"total_discount_value"`
 }
 
-func NewRequestParams_posting_fbo_list(since, to time.Time, offset, limit int64, sortingdir SortingDirection) *RequestParams_posting_fbo_list {
+type ResponseItem_posting_fbo_list_financialdataproductcommission struct {
+	// Commission amount for the product
+	CommissionAmount float64 `json:"amount"`
+
+	// Commission percentage
+	CommissionPercent int64 `json:"percent"`
+
+	// Code of the currency used to calculate the commissions
+	CommissionsCurrencyCode string `json:"currency"`
+}
+
+func NewRequestParams_posting_fbo_list(since, to time.Time, cursor string, limit int64, sortingdir SortingDirection) *RequestParams_posting_fbo_list {
 	req := &RequestParams_posting_fbo_list{
-		Direction: sortingdir,
-		Limit:     limit,
-		Offset:    offset,
+		SortDir: sortingdir,
+		Limit:   limit,
+		Cursor:  cursor,
 		With: RequestItem_posting_fbo_list_with{
 			AnalyticsData: true,
 			FinancialData: true,
@@ -223,7 +253,7 @@ func (cl *OzonClient) GetPostingFboList(params *RequestParams_posting_fbo_list) 
 	}
 	resp := &Response_posting_fbo_list{}
 
-	response, err := cl.doRequest(req, resp)
+	response, err := cl.doRequestRL(2, 0, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +270,7 @@ func (cl *OzonClient) GetPostingFboListDebug(params *RequestParams_posting_fbo_l
 
 	resp := &Response_posting_fbo_list{}
 
-	response, respp, resppbody, err := cl.doRequestDebug(req, resp)
+	response, respp, resppbody, err := cl.doRequestDebugRL(2, 0, req, resp)
 	if err != nil {
 		return nil, reqq, nil, nil, err
 	}

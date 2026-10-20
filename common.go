@@ -29,7 +29,7 @@ const (
 	url_products_list_attributes = "/v4/product/info/attributes"
 	url_products_upsert          = "/v3/product/import"
 
-	url_posting_fbo_list = "/v2/posting/fbo/list"
+	url_posting_fbo_list = "/v3/posting/fbo/list"
 
 	url_posting_fbs_list             = "/v4/posting/fbs/list"
 	url_posting_fbs_pass_to_shipping = "/v2/posting/fbs/awaiting-delivery"
