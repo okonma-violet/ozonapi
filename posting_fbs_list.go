@@ -277,7 +277,7 @@ type ResponseItem_posting_fbs_list struct {
 	TrackingNumber string `json:"tracking_number"`
 
 	// Объёмный вес товара
-	VolWeight string `json:"volume_weight"`
+	VolWeight float64 `json:"volume_weight"`
 }
 type ResponseItem_posting_fbs_list_addressee struct {
 	// Recipient name
