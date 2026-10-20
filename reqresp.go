@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
-	"time"
 
 	"io"
 	"net/http"
@@ -69,19 +68,6 @@ func (c *OzonClient) newRequest(method string, url string, bodyParams interface{
 // 	return reqs, nil
 // }
 
-func (c *OzonClient) doRequestRL(iters, ratelimit_retryafter int, req *http.Request, respbody interface{}) (*Response, error) {
-	if ratelimit_retryafter > 0 {
-		time.Sleep(time.Duration(ratelimit_retryafter) * time.Second)
-	}
-
-	resp, err := c.doRequest(req, respbody)
-	if resp.base.StatusCode == ratelimit_err_respcode && iters > 0 {
-		// по идее нужно рефлектом тип respbody вытащить и копию сделать, но так как озон при ошибке его не вернет, то допускаю забиение хуя
-		return c.doRequestRL(iters-1, resp.base.OzRatelimiter_RetryAfter, req, respbody)
-	}
-	return resp, err
-}
-
 func (c *OzonClient) doRequest(req *http.Request, respbody interface{}) (*Response, error) {
 	if c.ratelimiter != nil {
 		if !c.ratelimiter.wait() {
@@ -121,19 +107,6 @@ func (c *OzonClient) doRequest(req *http.Request, respbody interface{}) (*Respon
 	}
 
 	return response, nil
-}
-
-func (c *OzonClient) doRequestDebugRL(iters, ratelimit_retryafter int, req *http.Request, respbody interface{}) (*Response, *http.Response, []byte, error) {
-	if ratelimit_retryafter > 0 {
-		time.Sleep(time.Duration(ratelimit_retryafter) * time.Second)
-	}
-
-	resp, httpresp, body, err := c.doRequestDebug(req, respbody)
-	if resp.base.StatusCode == ratelimit_err_respcode && iters > 0 {
-		// по идее нужно рефлектом тип respbody вытащить и копию сделать, но так как озон при ошибке его не вернет, то допускаю забиение хуя
-		return c.doRequestDebugRL(iters-1, resp.base.OzRatelimiter_RetryAfter, req, respbody)
-	}
-	return resp, httpresp, body, err
 }
 
 // TODO: сделать эту функцию базовой, единственной

@@ -16,6 +16,7 @@ const (
 	header_ratelimiter_remaining  = "ratelimit-remaining"
 	header_ratelimiter_retryafter = "retry-after"
 	ratelimit_err_respcode        = 429
+	ratelimit_tryiters            = 2
 )
 
 const (

@@ -625,37 +625,47 @@ func NewRequestParams_posting_fbs_list(since, to, sincestat, tostat time.Time, c
 	return req
 }
 
-func (cl *OzonClient) GetPostingFbsList(params *RequestParams_posting_fbs_list) (*Response_posting_fbs_list, error) {
-	req, err := cl.newRequest(http.MethodPost, url_posting_fbs_list, params)
-	if err != nil {
-		return nil, err
-	}
-	resp := &Response_posting_fbs_list{}
+func (cl *OzonClient) GetPostingFbsList(params *RequestParams_posting_fbs_list) (resp *Response_posting_fbs_list, err error) {
+	for range ratelimit_tryiters {
+		req, err := cl.newRequest(http.MethodPost, url_posting_fbs_list, params)
+		if err != nil {
+			return nil, err
+		}
+		resp = &Response_posting_fbs_list{}
+		var response *Response
 
-	response, err := cl.doRequestRL(2, 0, req, resp)
-	if err != nil {
-		return nil, err
-	}
-	resp.baseResponse = response.base
-	//response.pasteBase(&resp.baseResponse)
+		response, err = cl.doRequest(req, resp)
+		if err != nil {
+			return nil, err
+		}
+		resp.baseResponse = response.base
 
+		if resp.StatusCode != ratelimit_err_respcode {
+			break
+		}
+	}
 	return resp, nil
 }
 
-func (cl *OzonClient) GetPostingFbsListDebug(params *RequestParams_posting_fbs_list) (*Response_posting_fbs_list, *http.Request, *http.Response, []byte, error) {
-	req, err := cl.newRequest(http.MethodPost, url_posting_fbs_list, params)
-	if err != nil {
-		return nil, nil, nil, nil, err
+func (cl *OzonClient) GetPostingFbsListDebug(params *RequestParams_posting_fbs_list) (resp *Response_posting_fbs_list, reqq *http.Request, respp *http.Response, resppbody []byte, err error) {
+	for range ratelimit_tryiters {
+		req, err := cl.newRequest(http.MethodPost, url_posting_fbs_list, params)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+		reqq, _ = cl.newRequest(http.MethodPost, url_posting_fbs_list, params)
+
+		resp = &Response_posting_fbs_list{}
+		var response *Response
+
+		response, respp, resppbody, err = cl.doRequestDebug(req, resp)
+		if err != nil {
+			return nil, reqq, nil, nil, err
+		}
+		resp.baseResponse = response.base
+		if resp.StatusCode != ratelimit_err_respcode {
+			break
+		}
 	}
-	reqq, _ := cl.newRequest(http.MethodPost, url_posting_fbs_list, params)
-
-	resp := &Response_posting_fbs_list{}
-
-	response, respp, resppbody, err := cl.doRequestDebugRL(2, 0, req, resp)
-	if err != nil {
-		return nil, reqq, nil, nil, err
-	}
-	resp.baseResponse = response.base
-
 	return resp, reqq, respp, resppbody, nil
 }
